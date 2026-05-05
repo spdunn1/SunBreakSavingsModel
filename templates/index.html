@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SunBreak — Agricultural Energy Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f0e;
+    --surface: #131715;
+    --surface2: #1a1f1c;
+    --surface3: #222820;
+    --border: #2a3028;
+    --border2: #354032;
+    --green: #4ade80;
+    --green-dim: #1a3a24;
+    --green-mid: #22c55e;
+    --amber: #fbbf24;
+    --amber-dim: #3a2d0a;
+    --red: #f87171;
+    --red-dim: #3a1010;
+    --blue: #60a5fa;
+    --blue-dim: #0f2040;
+    --text: #e8ede9;
+    --text-dim: #7a8f7d;
+    --text-faint: #3d4f3e;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --radius: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  .sidebar {
+    width: 320px;
+    min-width: 320px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar header ── */
+  .sidebar-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--green) 0%, #16a34a 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: var(--mono);
+  }
+
+  /* ── Form ── */
+  .sidebar-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin-bottom: 8px;
+    margin-top: 20px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  .field { margin-bottom: 10px; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+
+  .field input, .field select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 7px 10px;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+  }
+
+  .field input:focus, .field select:focus { border-color: var(--green-mid); }
+
+  .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a8f7d' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+
+  .toggle-label { font-size: 13px; color: var(--text); }
+
+  .toggle {
+    width: 36px;
+    height: 20px;
+    background: var(--border2);
+    border-radius: 10px;
+    position: relative;
+    transition: background 0.2s;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--green-mid); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: left 0.2s;
+  }
+  .toggle.on::after { left: 19px; }
+
+  .solar-fields { display: none; }
+  .solar-fields.visible { display: block; }
+
+  /* ── Presets ── */
+  .preset-list { display: flex; flex-direction: column; gap: 4px; }
+
+  .preset-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--sans);
+    font-size: 12px;
+    padding: 7px 10px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .preset-btn:hover { border-color: var(--green-mid); color: var(--text); background: var(--green-dim); }
+
+  /* ── Run button ── */
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .run-btn {
+    width: 100%;
+    background: var(--green);
+    color: #0a1a0d;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 11px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .run-btn:hover { background: var(--green-mid); }
+  .run-btn:disabled { background: var(--border2); color: var(--text-faint); cursor: not-allowed; }
+
+  .run-btn .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #0a1a0d;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .run-btn.loading .spinner { display: block; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Top bar ── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .farm-title {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  .farm-meta {
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    gap: 16px;
+  }
+
+  .badge {
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .badge-pge { background: #1a2a3a; color: var(--blue); }
+  .badge-sce { background: #2a1a10; color: var(--amber); }
+  .badge-sdge { background: var(--green-dim); color: var(--green); }
+
+  /* ── Dashboard body ── */
+  .dash-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border2) transparent;
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--text-faint);
+    font-family: var(--mono);
+  }
+
+  .empty-state .icon { font-size: 48px; opacity: 0.3; }
+  .empty-state p { font-size: 13px; }
+
+  /* ── KPI row ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+  }
+
+  .kpi.green::before { background: var(--green); }
+  .kpi.amber::before { background: var(--amber); }
+  .kpi.blue::before { background: var(--blue); }
+  .kpi.red::before { background: var(--red); }
+
+  .kpi-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: var(--mono);
+    margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .kpi.green .kpi-value { color: var(--green); }
+  .kpi.amber .kpi-value { color: var(--amber); }
+  .kpi.blue .kpi-value { color: var(--blue); }
+  .kpi.red .kpi-value { color: var(--red); }
+
+  .kpi-sub { font-size: 11px; color: var(--text-dim); }
+
+  /* ── Chart grid ── */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .chart-full { grid-column: 1 / -1; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+  }
+
+  .card-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+  }
+
+  .card-legend {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+
+  /* ── Bar charts ── */
+  .bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 28px 1fr 70px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bar-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: right;
+  }
+
+  .bar-track {
+    height: 20px;
+    background: var(--surface2);
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  .bar-fill.baseline { background: var(--surface3); border: 1px solid var(--border2); }
+  .bar-fill.optimized { background: linear-gradient(90deg, var(--green-dim), #1f4d2a); border: 1px solid var(--green); }
+  .bar-fill.savings { background: linear-gradient(90deg, #0d2a18, var(--green-dim)); border: 1px solid var(--green-mid); }
+
+  .bar-value {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: right;
+  }
+
+  /* ── Stacked bar for bill breakdown ── */
+  .stacked-section { margin-bottom: 14px; }
+
+  .stacked-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+
+  .stacked-bar {
+    height: 24px;
+    display: flex;
+    border-radius: 3px;
+    overflow: hidden;
+    gap: 1px;
+  }
+
+  .stacked-seg { height: 100%; transition: width 0.4s ease; }
+
+  .seg-customer { background: #2a3a5a; }
+  .seg-energy { background: #1a3f5c; }
+  .seg-frd { background: #4a2a1a; }
+  .seg-trd { background: #5c3a0a; }
+  .seg-summer { background: #4a3a0a; }
+  .seg-export { background: #0d2a18; }
+
+  .stacked-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+  .stacked-legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-sq { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* ── Savings breakdown table ── */
+  .breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .breakdown-table tr { border-bottom: 1px solid var(--border); }
+  .breakdown-table tr:last-child { border-bottom: none; }
+
+  .breakdown-table td {
+    padding: 8px 0;
+    font-size: 13px;
+  }
+
+  .breakdown-table td:last-child {
+    text-align: right;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  .breakdown-table .total-row td {
+    font-weight: 600;
+    color: var(--green);
+    border-top: 1px solid var(--border2);
+    padding-top: 10px;
+  }
+
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+
+  /* ── Monthly savings bars ── */
+  .monthly-grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 4px;
+    align-items: end;
+    height: 100px;
+  }
+
+  .month-col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+
+  .month-bar {
+    width: 100%;
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+    transition: height 0.4s ease;
+  }
+
+  .month-bar.pos { background: linear-gradient(180deg, var(--green), var(--green-dim)); }
+  .month-bar.neg { background: linear-gradient(0deg, var(--red), var(--red-dim)); }
+
+  .month-name { font-family: var(--mono); font-size: 9px; color: var(--text-faint); }
+  .month-val { font-family: var(--mono); font-size: 9px; color: var(--text-dim); }
+
+  /* ── Error banner ── */
+  .error-banner {
+    background: var(--red-dim);
+    border: 1px solid var(--red);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    color: var(--red);
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">☀</div>
+        <div>
+          <div class="logo-text">SunBreak</div>
+        </div>
+      </div>
+      <div class="logo-sub">Agricultural Energy Optimizer</div>
+    </div>
+
+    <div class="sidebar-body">
+
+      <!-- Presets -->
+      <div class="section-label">Quick Presets</div>
+      <div class="preset-list" id="presetList">
+        <div style="font-size:12px;color:var(--text-faint)">Loading...</div>
+      </div>
+
+      <!-- Farm -->
+      <div class="section-label">Farm Identity</div>
+      <div class="field">
+        <label>Farm Name</label>
+        <input type="text" id="farm_name" value="Central Valley Almond Ranch">
+      </div>
+
+      <!-- Utility & Tariff -->
+      <div class="section-label">Utility & Tariff</div>
+      <div class="field">
+        <label>Utility</label>
+        <select id="utility" onchange="updateTariffs()">
+          <option value="PG&E">PG&E</option>
+          <option value="SCE">SCE</option>
+          <option value="SDG&E">SDG&E</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Rate Schedule</label>
+        <select id="tariff_key"></select>
+      </div>
+      <div class="field">
+        <label>Climate Region</label>
+        <select id="climate_region"></select>
+      </div>
+
+      <!-- Crop & Irrigation -->
+      <div class="section-label">Crop & Irrigation</div>
+      <div class="field">
+        <label>Crop</label>
+        <select id="crop_name"></select>
+      </div>
+      <div class="field">
+        <label>Irrigation System</label>
+        <select id="irrigation_type"></select>
+      </div>
+
+      <!-- Pump -->
+      <div class="section-label">Pump System</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Area (acres)</label>
+          <input type="number" id="area_acres" value="350" min="1" max="5000">
+        </div>
+        <div class="field">
+          <label>Pump (kW)</label>
+          <input type="number" id="pump_kw" value="300" min="1" max="2000">
+        </div>
+      </div>
+      <div class="field">
+        <label>Total Dynamic Head (ft) — optional</label>
+        <input type="number" id="total_dynamic_head_ft" placeholder="Uses crop default if blank" min="10" max="1000">
+      </div>
+
+      <!-- Solar -->
+      <div class="section-label">Solar</div>
+      <div class="toggle-row" onclick="toggleSolar()">
+        <span class="toggle-label">Solar / PV System</span>
+        <div class="toggle" id="solarToggle"></div>
+      </div>
+      <div class="solar-fields" id="solarFields">
+        <div class="field-row">
+          <div class="field">
+            <label>System Size (kW DC)</label>
+            <input type="number" id="solar_kw_dc" value="200" min="1" max="10000">
+          </div>
+          <div class="field">
+            <label>NEM Program</label>
+            <select id="nem_program">
+              <option value="NBT">NBT (NEM 3.0)</option>
+              <option value="NEM2">NEM 2.0 (grandfathered)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>PTO Year (for NBT vintage)</label>
+          <input type="number" id="nem_vintage_year" value="2025" min="2023" max="2030">
+        </div>
+      </div>
+
+    </div>
+
+    <div class="sidebar-footer">
+      <button class="run-btn" id="runBtn" onclick="runSimulation()">
+        <div class="spinner"></div>
+        <span id="runBtnText">▶ RUN SIMULATION</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="farm-title" id="topFarmTitle">—</div>
+        <div class="farm-meta" id="topFarmMeta"></div>
+      </div>
+      <div id="topBadge"></div>
+    </div>
+
+    <div class="dash-body" id="dashBody">
+      <div class="empty-state">
+        <div class="icon">⚡</div>
+        <p>Configure a farm and run a simulation</p>
+        <p style="color:var(--text-faint);font-size:11px">or select a preset to get started</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let meta = {};
+let hasSolar = false;
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── Boot ──────────────────────────────────────────────────────────
+async function boot() {
+  const [metaRes, presetRes] = await Promise.all([fetch('/api/meta'), fetch('/api/presets')]);
+  meta = await metaRes.json();
+  const presets = await presetRes.json();
+
+  // Populate utility-based tariffs
+  updateTariffs();
+
+  // Climate regions
+  const crSel = document.getElementById('climate_region');
+  for (const [k, v] of Object.entries(meta.climate_regions)) {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = v;
+    if (k === 'central_valley') o.selected = true;
+    crSel.appendChild(o);
+  }
+
+  // Crops (grouped)
+  const cropSel = document.getElementById('crop_name');
+  for (const [group, crops] of Object.entries(meta.crop_groups)) {
+    const og = document.createElement('optgroup');
+    og.label = group;
+    for (const c of crops) {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = meta.crops[c].display_name;
+      if (c === 'almond') o.selected = true;
+      og.appendChild(o);
+    }
+    cropSel.appendChild(og);
+  }
+
+  // Irrigation
+  const irrSel = document.getElementById('irrigation_type');
+  for (const [k, v] of Object.entries(meta.irrigation_systems)) {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = `${v.display_name} (η=${(v.efficiency*100).toFixed(0)}%)`;
+    if (k === 'drip') o.selected = true;
+    irrSel.appendChild(o);
+  }
+
+  // Presets
+  const pl = document.getElementById('presetList');
+  pl.innerHTML = '';
+  for (const p of presets) {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.textContent = p.label;
+    btn.onclick = () => applyPreset(p);
+    pl.appendChild(btn);
+  }
+}
+
+function updateTariffs() {
+  const util = document.getElementById('utility').value;
+  const sel = document.getElementById('tariff_key');
+  const tariffs = meta.utilities ? meta.utilities[util] || [] : [];
+  sel.innerHTML = '';
+  for (const t of tariffs) {
+    const o = document.createElement('option');
+    o.value = t; o.textContent = t.replace(`${util}:`, '');
+    sel.appendChild(o);
+  }
+  // Default selections per utility
+  if (util === 'PG&E' && tariffs.includes('PG&E:AG-B')) sel.value = 'PG&E:AG-B';
+  if (util === 'SCE' && tariffs.includes('SCE:TOU-PA-2-D')) sel.value = 'SCE:TOU-PA-2-D';
+  if (util === 'SDG&E' && tariffs.includes('SDG&E:TOU-PA')) sel.value = 'SDG&E:TOU-PA';
+}
+
+function toggleSolar() {
+  hasSolar = !hasSolar;
+  document.getElementById('solarToggle').classList.toggle('on', hasSolar);
+  document.getElementById('solarFields').classList.toggle('visible', hasSolar);
+}
+
+function applyPreset(p) {
+  document.getElementById('farm_name').value = p.label.split('—')[1]?.trim() || p.label;
+  document.getElementById('utility').value = p.utility;
+  updateTariffs();
+  // Small delay to let tariffs populate
+  setTimeout(() => {
+    document.getElementById('tariff_key').value = p.tariff_key;
+    document.getElementById('climate_region').value = p.climate_region;
+    document.getElementById('crop_name').value = p.crop_name;
+    document.getElementById('irrigation_type').value = p.irrigation_type;
+    document.getElementById('area_acres').value = p.area_acres;
+    document.getElementById('pump_kw').value = p.pump_kw;
+    // Solar
+    if (p.has_solar !== hasSolar) toggleSolar();
+    if (p.has_solar) {
+      document.getElementById('solar_kw_dc').value = p.solar_kw_dc;
+      document.getElementById('nem_program').value = p.nem_program;
+    }
+  }, 50);
+}
+
+// ── Run simulation ─────────────────────────────────────────────────
+async function runSimulation() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.classList.add('loading');
+  document.getElementById('runBtnText').textContent = 'RUNNING...';
+
+  const tdh = document.getElementById('total_dynamic_head_ft').value;
+
+  const payload = {
+    farm_name: document.getElementById('farm_name').value,
+    utility: document.getElementById('utility').value,
+    tariff_key: document.getElementById('tariff_key').value,
+    climate_region: document.getElementById('climate_region').value,
+    crop_name: document.getElementById('crop_name').value,
+    irrigation_type: document.getElementById('irrigation_type').value,
+    area_acres: parseFloat(document.getElementById('area_acres').value),
+    pump_kw: parseFloat(document.getElementById('pump_kw').value),
+    total_dynamic_head_ft: tdh ? parseFloat(tdh) : null,
+    has_solar: hasSolar,
+    solar_kw_dc: hasSolar ? parseFloat(document.getElementById('solar_kw_dc').value) : 0,
+    nem_program: document.getElementById('nem_program').value,
+    nem_vintage_year: parseInt(document.getElementById('nem_vintage_year').value),
+  };
+
+  try {
+    const res = await fetch('/api/simulate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (json.status === 'ok') {
+      renderDashboard(json.data, payload);
+    } else {
+      showError(json.message);
+    }
+  } catch(e) {
+    showError(e.message);
+  }
+
+  btn.disabled = false;
+  btn.classList.remove('loading');
+  document.getElementById('runBtnText').textContent = '▶ RUN SIMULATION';
+}
+
+function showError(msg) {
+  const body = document.getElementById('dashBody');
+  body.innerHTML = `<div class="error-banner" style="display:block">⚠ Simulation error: ${msg}</div>`;
+}
+
+// ── Render ─────────────────────────────────────────────────────────
+function renderDashboard(d, params) {
+  // Topbar
+  document.getElementById('topFarmTitle').textContent = d.farm || params.farm_name;
+  const cropLabel = meta.crops?.[d.crop]?.display_name || d.crop;
+  const irrLabel = meta.irrigation_systems?.[d.irrigation]?.display_name || d.irrigation;
+  document.getElementById('topFarmMeta').innerHTML =
+    `<span>${d.area_acres} ac</span><span>${d.pump_kw} kW pump</span>` +
+    (d.solar_kw_dc ? `<span>${d.solar_kw_dc} kW solar</span>` : '') +
+    `<span>${cropLabel}</span><span>${irrLabel}</span>`;
+
+  const util = d.utility;
+  const badgeCls = util === 'PG&E' ? 'badge-pge' : util === 'SCE' ? 'badge-sce' : 'badge-sdge';
+  document.getElementById('topBadge').innerHTML =
+    `<span class="badge ${badgeCls}">${util} ${d.tariff}</span>`;
+
+  // Monthly savings
+  const ms = d.monthly_savings;
+  const maxAbsSaving = Math.max(...Object.values(ms).map(Math.abs), 1);
+
+  const body = document.getElementById('dashBody');
+  body.innerHTML = `
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi green">
+        <div class="kpi-label">Annual Savings</div>
+        <div class="kpi-value">${fmt$(d.annual_savings)}</div>
+        <div class="kpi-sub">${d.savings_pct}% reduction · ${fmt$(d.baseline_annual_bill)} → ${fmt$(d.optimized_annual_bill)}</div>
+      </div>
+      <div class="kpi amber">
+        <div class="kpi-label">Energy Charge Savings</div>
+        <div class="kpi-value">${fmt$(d.energy_charge_savings)}</div>
+        <div class="kpi-sub">TOU shift to off-peak hours</div>
+      </div>
+      <div class="kpi blue">
+        <div class="kpi-label">Demand Charge Savings</div>
+        <div class="kpi-value">${fmt$(d.demand_charge_savings)}</div>
+        <div class="kpi-sub">Peak kW reduction — ${d.peak_kw_baseline} → ${d.peak_kw_optimized} kW</div>
+      </div>
+      <div class="kpi ${d.solar_kw_dc > 0 ? 'green' : 'red'}">
+        <div class="kpi-label">${d.solar_kw_dc > 0 ? 'Solar Self-Consumption' : 'No Solar'}</div>
+        <div class="kpi-value">${d.solar_kw_dc > 0 ? fmt$(d.solar_self_consumption_savings) : '—'}</div>
+        <div class="kpi-sub">${d.solar_kw_dc > 0 ? fmtMWh(d.total_solar_self_consumed_kwh) + ' self-consumed' : 'Add solar to unlock self-consumption savings'}</div>
+      </div>
+    </div>
+
+    <!-- Row 1: Monthly savings + Bill breakdown -->
+    <div class="chart-grid">
+      <div class="card chart-full">
+        <div class="card-header">
+          <span class="card-title">Monthly Savings — Baseline vs Optimized</span>
+          <div class="card-legend">
+            <span><span class="legend-dot" style="background:var(--green)"></span>Savings</span>
+            <span><span class="legend-dot" style="background:var(--red)"></span>Cost increase</span>
+          </div>
+        </div>
+        <div class="monthly-grid" id="monthlySavingsChart"></div>
+      </div>
+    </div>
+
+    <!-- Row 2: Monthly bill bars + Breakdown table -->
+    <div class="chart-grid">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Monthly Bill — Baseline vs Optimized ($/mo)</span>
+          <div class="card-legend">
+            <span><span class="legend-dot" style="background:var(--surface3);border:1px solid var(--border2)"></span>Baseline</span>
+            <span><span class="legend-dot" style="background:var(--green-dim);border:1px solid var(--green)"></span>Optimized</span>
+          </div>
+        </div>
+        <div class="bar-chart" id="monthlyBillChart"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Annual Bill Breakdown</span>
+        </div>
+        ${renderBreakdownTable(d)}
+      </div>
+    </div>
+
+    <!-- Row 3: Grid import bars + Bill component stacks -->
+    <div class="chart-grid">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Monthly Grid Import (MWh)</span>
+          <div class="card-legend">
+            <span><span class="legend-dot" style="background:var(--border2)"></span>Baseline</span>
+            <span><span class="legend-dot" style="background:var(--green)"></span>Optimized</span>
+          </div>
+        </div>
+        <div class="bar-chart" id="gridImportChart"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Bill Component Stacks</span>
+        </div>
+        ${renderStackedBills(d)}
+      </div>
+    </div>
+
+  `;
+
+  // Render monthly savings bars
+  const msChart = document.getElementById('monthlySavingsChart');
+  for (let m = 1; m <= 12; m++) {
+    const val = ms[m] || 0;
+    const pct = Math.abs(val) / maxAbsSaving;
+    const heightPx = Math.max(2, Math.round(pct * 90));
+    const isPos = val >= 0;
+    const col = document.createElement('div');
+    col.className = 'month-col';
+    col.innerHTML = `
+      <div class="month-val">${val >= 0 ? '+' : ''}${Math.round(val/100)/10}k</div>
+      <div class="month-bar ${isPos ? 'pos' : 'neg'}" style="height:${heightPx}px"></div>
+      <div class="month-name">${MONTHS[m-1]}</div>
+    `;
+    msChart.appendChild(col);
+  }
+
+  // Monthly bill bars
+  const billChart = document.getElementById('monthlyBillChart');
+  const bBills = d.baseline_monthly_bills;
+  const oBills = d.optimized_monthly_bills;
+  const maxBill = Math.max(...Object.values(bBills).map(b => b.total), 1);
+  for (let m = 1; m <= 12; m++) {
+    const bVal = bBills[m]?.total || 0;
+    const oVal = oBills[m]?.total || 0;
+    const bPct = bVal / maxBill * 100;
+    const oPct = oVal / maxBill * 100;
+    billChart.innerHTML += `
+      <div class="bar-row">
+        <span class="bar-label">${MONTHS[m-1]}</span>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div class="bar-track" style="height:10px">
+            <div class="bar-fill baseline" style="width:${bPct}%"></div>
+          </div>
+          <div class="bar-track" style="height:10px">
+            <div class="bar-fill optimized" style="width:${oPct}%"></div>
+          </div>
+        </div>
+        <span class="bar-value">${fmt$(bVal)}<br><span class="pos">${fmt$(oVal)}</span></span>
+      </div>`;
+  }
+
+  // Grid import bars
+  const giChart = document.getElementById('gridImportChart');
+  const bKwh = d.baseline_monthly_kwh;
+  const oKwh = d.optimized_monthly_kwh;
+  const maxKwh = Math.max(...Object.values(bKwh).map(Number), 1);
+  for (let m = 1; m <= 12; m++) {
+    const bVal = bKwh[m] || 0;
+    const oVal = oKwh[m] || 0;
+    const bPct = bVal / maxKwh * 100;
+    const oPct = oVal / maxKwh * 100;
+    giChart.innerHTML += `
+      <div class="bar-row">
+        <span class="bar-label">${MONTHS[m-1]}</span>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <div class="bar-track" style="height:10px">
+            <div class="bar-fill baseline" style="width:${bPct}%"></div>
+          </div>
+          <div class="bar-track" style="height:10px">
+            <div class="bar-fill optimized" style="width:${oPct}%"></div>
+          </div>
+        </div>
+        <span class="bar-value">${fmtMWh(bVal)}<br><span class="pos">${fmtMWh(oVal)}</span></span>
+      </div>`;
+  }
+}
+
+function renderBreakdownTable(d) {
+  const rows = [
+    ['Customer Charges', null, null],
+    ['Annual customer charge', null, `${fmt$(d.baseline_monthly_bills[1]?.customer_charge * 12 || 0)}`],
+    ['Energy Charges', null, null],
+    ['Baseline energy charges', fmt$(d.baseline_annual_bill - (d.annual_savings || 0) + (d.energy_charge_savings || 0)), null],
+    ['TOU shift savings', null, `<span class="pos">+${fmt$(d.energy_charge_savings)}</span>`],
+    ['Demand Charges', null, null],
+    ['Demand savings (FRD+TRD)', null, `<span class="pos">+${fmt$(d.demand_charge_savings)}</span>`],
+    ['Solar', null, null],
+    ['Self-consumption savings', null, `<span class="pos">+${fmt$(d.solar_self_consumption_savings)}</span>`],
+    ['Export credit change', null, `<span class="${d.export_credit_change >= 0 ? 'pos' : 'neg'}">${d.export_credit_change >= 0 ? '+' : ''}${fmt$(d.export_credit_change)}</span>`],
+  ];
+  let html = `<table class="breakdown-table">`;
+  for (const [label, val, val2] of rows) {
+    if (!val && !val2) {
+      html += `<tr><td colspan="2" style="color:var(--text-faint);font-size:11px;font-family:var(--mono);letter-spacing:0.08em;text-transform:uppercase;padding-top:14px">${label}</td></tr>`;
+    } else {
+      html += `<tr><td style="color:var(--text-dim);padding-left:12px">${label}</td><td>${val2 || val || '—'}</td></tr>`;
+    }
+  }
+  html += `<tr class="total-row"><td>Net Annual Savings</td><td>${fmt$(d.annual_savings)} (${d.savings_pct}%)</td></tr>`;
+  html += '</table>';
+  return html;
+}
+
+function renderStackedBills(d) {
+  const makeSeg = (pct, cls, title) =>
+    `<div class="stacked-seg ${cls}" style="width:${pct}%" title="${title}"></div>`;
+
+  function billSegs(bills, totalSum) {
+    const avg = (key) => Object.values(bills).reduce((s, b) => s + (b[key] || 0), 0);
+    const cc = avg('customer_charge'); const en = avg('energy_charge');
+    const frd = avg('demand_frd'); const trd = avg('demand_trd');
+    const sp = avg('demand_summer_peak'); const ex = Math.abs(avg('export_credit'));
+    const total = cc + en + frd + trd + sp - ex || 1;
+    return [
+      makeSeg(cc/total*100, 'seg-customer', `Customer: ${fmt$(cc)}`),
+      makeSeg(en/total*100, 'seg-energy', `Energy: ${fmt$(en)}`),
+      makeSeg(frd/total*100, 'seg-frd', `FRD Demand: ${fmt$(frd)}`),
+      makeSeg(trd/total*100, 'seg-trd', `TRD Demand: ${fmt$(trd)}`),
+      makeSeg(sp/total*100, 'seg-summer', `Summer Peak: ${fmt$(sp)}`),
+    ].join('');
+  }
+
+  return `
+    <div class="stacked-section">
+      <div class="stacked-label">Baseline — ${fmt$(d.baseline_annual_bill)}/yr</div>
+      <div class="stacked-bar">${billSegs(d.baseline_monthly_bills, d.baseline_annual_bill)}</div>
+    </div>
+    <div class="stacked-section">
+      <div class="stacked-label">Optimized — ${fmt$(d.optimized_annual_bill)}/yr</div>
+      <div class="stacked-bar">${billSegs(d.optimized_monthly_bills, d.optimized_annual_bill)}</div>
+    </div>
+    <div class="stacked-legend">
+      <div class="stacked-legend-item"><div class="legend-sq seg-customer"></div>Customer</div>
+      <div class="stacked-legend-item"><div class="legend-sq seg-energy"></div>Energy</div>
+      <div class="stacked-legend-item"><div class="legend-sq seg-frd"></div>FRD Demand</div>
+      <div class="stacked-legend-item"><div class="legend-sq seg-trd"></div>TRD Demand</div>
+      <div class="stacked-legend-item"><div class="legend-sq seg-summer"></div>Summer Peak</div>
+    </div>
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
+      <table class="breakdown-table">
+        <tr><td style="color:var(--text-dim)">Total grid import</td><td>${fmtMWh(d.total_grid_import_kwh)}</td></tr>
+        ${d.solar_kw_dc > 0 ? `
+        <tr><td style="color:var(--text-dim)">Solar self-consumed</td><td class="pos">${fmtMWh(d.total_solar_self_consumed_kwh)}</td></tr>
+        <tr><td style="color:var(--text-dim)">Solar exported</td><td>${fmtMWh(d.total_solar_exported_kwh)}</td></tr>
+        ` : ''}
+        <tr><td style="color:var(--text-dim)">Peak demand (baseline)</td><td>${d.peak_kw_baseline} kW</td></tr>
+        <tr><td style="color:var(--text-dim)">Peak demand (optimized)</td><td class="pos">${d.peak_kw_optimized} kW</td></tr>
+      </table>
+    </div>`;
+}
+
+// ── Formatters ────────────────────────────────────────────────────
+function fmt$(n) {
+  if (n === null || n === undefined) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1000) return `$${(abs/1000).toFixed(1)}k`;
+  return `$${abs.toFixed(0)}`;
+}
+
+function fmtMWh(kwh) {
+  if (!kwh) return '0 kWh';
+  if (kwh >= 1000) return `${(kwh/1000).toFixed(1)} MWh`;
+  return `${Math.round(kwh)} kWh`;
+}
+
+boot();
+</script>
+</body>
+</html>
